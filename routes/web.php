@@ -1,5 +1,9 @@
 <?php
 
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CommentController;
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\TagController;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
 use App\Livewire\Settings\Profile;
@@ -15,7 +19,17 @@ Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+// Blog routes
+Route::resource('posts', PostController::class);
+Route::resource('categories', CategoryController::class);
+Route::resource('tags', TagController::class);
+Route::get('comments', [CommentController::class, 'index'])->name('comments.index');
+
 Route::middleware(['auth'])->group(function () {
+    Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('posts.comments.store');
+    Route::patch('comments/{comment}/approve', [CommentController::class, 'approve'])->name('comments.approve');
+    Route::delete('comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+
     Route::redirect('settings', 'settings/profile');
 
     Route::get('settings/profile', Profile::class)->name('profile.edit');
