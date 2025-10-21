@@ -15,6 +15,13 @@
                 <flux:navlist.group :heading="__('Platform')" class="grid">
                     <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
                 </flux:navlist.group>
+
+                <flux:navlist.group :heading="__('Blog')" class="grid">
+                    <flux:navlist.item icon="document-text" :href="route('posts.index')" :current="request()->routeIs('posts.*')">{{ __('Posts') }}</flux:navlist.item>
+                    <flux:navlist.item icon="folder" :href="route('categories.index')" :current="request()->routeIs('categories.*')">{{ __('Categories') }}</flux:navlist.item>
+                    <flux:navlist.item icon="tag" :href="route('tags.index')" :current="request()->routeIs('tags.*')">{{ __('Tags') }}</flux:navlist.item>
+                    <flux:navlist.item icon="chat-bubble-left-right" :href="route('comments.index')" :current="request()->routeIs('comments.*')">{{ __('Comments') }}</flux:navlist.item>
+                </flux:navlist.group>
             </flux:navlist>
 
             <flux:spacer />
