@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call([
-            BlogSeeder::class,
+            LargeDatasetSeeder::class,
         ]);
     }
 }
