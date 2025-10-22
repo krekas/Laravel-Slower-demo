@@ -59,7 +59,7 @@ class DashboardController extends Controller
             ->get();
 
         // Query 4: Category stats with joins
-        $categoryStats = DB::table('categories')
+        /*$categoryStats = DB::table('categories')
             ->select([
                 'categories.name',
                 'categories.slug',
@@ -72,6 +72,32 @@ class DashboardController extends Controller
             ->leftJoin('posts', 'categories.id', '=', 'posts.category_id')
             ->groupBy('categories.id', 'categories.name', 'categories.slug')
             ->orderByRaw('post_count DESC')
+            ->get();*/
+        $categoryStats = DB::table('categories')
+            ->select([
+                'categories.name',
+                'categories.slug',
+                DB::raw('COALESCE(ps.post_count, 0) as post_count'),
+                DB::raw('COALESCE(ps.avg_views, 0) as avg_views'),
+                DB::raw('COALESCE(cc.comment_count, 0) as total_comments'),
+            ])
+            ->leftJoin(DB::raw('(
+                    SELECT
+                        posts.category_id,
+                        COUNT(*) as post_count,
+                        AVG(posts.view_count) as avg_views
+                    FROM posts
+                    GROUP BY posts.category_id
+                ) AS ps'), 'ps.category_id', '=', 'categories.id')
+                        ->leftJoin(DB::raw('(
+                    SELECT
+                        posts.category_id,
+                        COUNT(*) as comment_count
+                    FROM comments
+                    JOIN posts ON posts.id = comments.post_id
+                    GROUP BY posts.category_id
+                ) AS cc'), 'cc.category_id', '=', 'categories.id')
+            ->orderBy('post_count', 'DESC')
             ->get();
 
         // Query 5: Popular tags with correlated subquery
