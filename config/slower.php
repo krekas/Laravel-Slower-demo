@@ -13,8 +13,8 @@ return [
         'model' => SlowLog::class,
     ],
     'ai_recommendation' => env('SLOWER_AI_RECOMMENDATION', true),
-    'recommendation_model' => env('SLOWER_AI_RECOMMENDATION_MODEL', 'gpt-4'),
-    'recommendation_use_explain' => env('SLOWER_AI_RECOMMENDATION_USE_EXPLAIN', true),
+    'recommendation_model' => env('SLOWER_AI_RECOMMENDATION_MODEL', 'gpt-5'),
+    'recommendation_use_explain' => env('SLOWER_AI_RECOMMENDATION_USE_EXPLAIN', false),
     'ignore_explain_queries' => env('SLOWER_IGNORE_EXPLAIN_QUERIES', true),
     'ignore_insert_queries' => env('SLOWER_IGNORE_INSERT_QUERIES', true),
     'open_ai' => [

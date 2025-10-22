@@ -11,11 +11,11 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class LargeDatasetSeeder extends Seeder
+class DashboardDataSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
-     * Creates a large dataset to ensure queries are slow enough to be caught by Laravel Slower
+     * Seed data for dashboard demo - optimized to avoid timeouts
+     * Creates enough data for queries to take 1-2 seconds
      */
     public function run(): void
     {
@@ -27,19 +27,15 @@ class LargeDatasetSeeder extends Seeder
         Post::truncate();
         Category::truncate();
         Tag::truncate();
-        // Keep existing users but add more
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         $this->command->info('Creating users...');
-
-        // Get existing users or create some
         $existingUsers = User::all();
         if ($existingUsers->count() === 0) {
-            $users = User::factory(50)->create();
+            $users = User::factory(30)->create();
         } else {
-            // Add more users to existing ones
-            $newUsers = User::factory(100)->create();
+            $newUsers = User::factory(50)->create();
             $users = $existingUsers->concat($newUsers);
         }
 
@@ -48,8 +44,7 @@ class LargeDatasetSeeder extends Seeder
         $categoryNames = [
             'Technology', 'Science', 'Business', 'Health', 'Entertainment',
             'Sports', 'Politics', 'Education', 'Travel', 'Food',
-            'Fashion', 'Art', 'Music', 'Movies', 'Books',
-            'Gaming', 'Photography', 'Fitness', 'Lifestyle', 'Finance'
+            'Fashion', 'Art', 'Music', 'Gaming', 'Lifestyle'
         ];
 
         foreach ($categoryNames as $name) {
@@ -63,14 +58,11 @@ class LargeDatasetSeeder extends Seeder
         $this->command->info('Creating tags...');
         $tags = [];
         $tagNames = [
-            'PHP', 'Laravel', 'JavaScript', 'Python', 'Java', 'C++', 'Ruby', 'Go',
-            'Vue', 'React', 'Angular', 'Node.js', 'Docker', 'Kubernetes', 'AWS',
-            'Tutorial', 'Guide', 'News', 'Review', 'Opinion', 'Analysis', 'Research',
-            'Beginner', 'Advanced', 'Expert', 'Tips', 'Tricks', 'Best Practices',
-            'Security', 'Performance', 'Optimization', 'Testing', 'Debugging',
-            'Design', 'Architecture', 'Patterns', 'Database', 'API', 'REST',
-            'GraphQL', 'Frontend', 'Backend', 'FullStack', 'DevOps', 'ML',
-            'AI', 'Blockchain', 'IoT', 'Mobile', 'Web', 'Desktop'
+            'PHP', 'Laravel', 'JavaScript', 'Python', 'Java', 'Ruby', 'Go',
+            'Vue', 'React', 'Angular', 'Docker', 'AWS', 'Tutorial', 'Guide',
+            'News', 'Review', 'Opinion', 'Beginner', 'Advanced', 'Tips',
+            'Security', 'Performance', 'Testing', 'Design', 'API', 'REST',
+            'GraphQL', 'Frontend', 'Backend', 'DevOps', 'AI', 'Mobile'
         ];
 
         foreach ($tagNames as $name) {
@@ -80,16 +72,14 @@ class LargeDatasetSeeder extends Seeder
             ]);
         }
 
-        $this->command->info('Creating posts (this will take a while)...');
+        $this->command->info('Creating posts...');
         $posts = [];
         $batchSize = 500;
-        $totalPosts = 5000; // Create 5000 posts
+        $totalPosts = 2000; // Reduced from 5000 to prevent timeouts
 
         for ($i = 0; $i < $totalPosts; $i++) {
             $category = $categories[array_rand($categories)];
             $user = $users->random();
-
-            // Create posts with varying dates over the past year
             $createdAt = now()->subDays(rand(1, 365));
 
             $posts[] = [
@@ -99,14 +89,13 @@ class LargeDatasetSeeder extends Seeder
                 'excerpt' => $this->generateExcerpt(),
                 'user_id' => $user->id,
                 'category_id' => $category->id,
-                'is_published' => rand(0, 100) > 10, // 90% published
+                'is_published' => rand(0, 100) > 10,
                 'view_count' => rand(0, 10000),
                 'published_at' => $createdAt,
                 'created_at' => $createdAt,
                 'updated_at' => $createdAt,
             ];
 
-            // Insert in batches
             if (count($posts) >= $batchSize) {
                 Post::insert($posts);
                 $this->command->info("Created {$i} posts...");
@@ -114,7 +103,6 @@ class LargeDatasetSeeder extends Seeder
             }
         }
 
-        // Insert remaining posts
         if (count($posts) > 0) {
             Post::insert($posts);
         }
@@ -124,8 +112,7 @@ class LargeDatasetSeeder extends Seeder
         $tagAttachments = [];
 
         foreach ($allPosts as $post) {
-            // Attach 1-8 random tags to each post
-            $postTags = collect($tags)->random(rand(1, 8));
+            $postTags = collect($tags)->random(rand(1, 6));
             foreach ($postTags as $tag) {
                 $tagAttachments[] = [
                     'post_id' => $post->id,
@@ -133,7 +120,6 @@ class LargeDatasetSeeder extends Seeder
                 ];
             }
 
-            // Insert in batches to avoid memory issues
             if (count($tagAttachments) >= 1000) {
                 DB::table('post_tag')->insert($tagAttachments);
                 $tagAttachments = [];
@@ -144,9 +130,9 @@ class LargeDatasetSeeder extends Seeder
             DB::table('post_tag')->insert($tagAttachments);
         }
 
-        $this->command->info('Creating comments (this will take a long while)...');
+        $this->command->info('Creating comments...');
         $comments = [];
-        $totalComments = 15000; // Create 15000 comments
+        $totalComments = 8000; // Reduced from 15000
 
         for ($i = 0; $i < $totalComments; $i++) {
             $post = $allPosts->random();
@@ -155,9 +141,9 @@ class LargeDatasetSeeder extends Seeder
             $comments[] = [
                 'post_id' => $post->id,
                 'user_id' => $user->id,
-                'parent_id' => null, // First create parent comments
+                'parent_id' => null,
                 'content' => $this->generateCommentContent(),
-                'is_approved' => rand(0, 100) > 5, // 95% approved
+                'is_approved' => rand(0, 100) > 5,
                 'created_at' => now()->subDays(rand(1, 365)),
                 'updated_at' => now(),
             ];
@@ -173,10 +159,10 @@ class LargeDatasetSeeder extends Seeder
             Comment::insert($comments);
         }
 
-        $this->command->info('Creating nested comments (replies)...');
+        $this->command->info('Creating nested comments...');
         $allComments = Comment::all();
         $replies = [];
-        $totalReplies = 10000; // Create 10000 reply comments
+        $totalReplies = 5000; // Reduced from 10000
 
         for ($i = 0; $i < $totalReplies; $i++) {
             $parentComment = $allComments->random();
@@ -203,7 +189,7 @@ class LargeDatasetSeeder extends Seeder
             Comment::insert($replies);
         }
 
-        $this->command->info('Large dataset seeding completed!');
+        $this->command->info('Dashboard data seeding completed!');
         $this->command->info('Total Posts: ' . Post::count());
         $this->command->info('Total Comments: ' . Comment::count());
         $this->command->info('Total Tags: ' . Tag::count());
@@ -222,8 +208,6 @@ class LargeDatasetSeeder extends Seeder
             'Why %s Matters in Modern Development',
             'Getting Started with %s',
             'Advanced %s Techniques',
-            'Common Mistakes in %s and How to Avoid Them',
-            'The Future of %s',
         ];
 
         $topics = [
@@ -240,11 +224,11 @@ class LargeDatasetSeeder extends Seeder
 
     private function generateContent(): string
     {
-        $paragraphs = rand(5, 15);
+        $paragraphs = rand(3, 8);
         $content = [];
 
         for ($i = 0; $i < $paragraphs; $i++) {
-            $sentences = rand(3, 8);
+            $sentences = rand(2, 5);
             $paragraph = [];
 
             for ($j = 0; $j < $sentences; $j++) {
@@ -264,7 +248,7 @@ class LargeDatasetSeeder extends Seeder
 
     private function generateCommentContent(): string
     {
-        $sentences = rand(1, 5);
+        $sentences = rand(1, 3);
         $comment = [];
 
         for ($i = 0; $i < $sentences; $i++) {
@@ -278,25 +262,22 @@ class LargeDatasetSeeder extends Seeder
     {
         $starters = [
             'This is a great', 'I think that', 'In my experience',
-            'The best way to', 'You should always', 'Never forget to',
-            'It is important to', 'Many developers', 'The key to',
-            'When working with', 'One of the most', 'This approach',
+            'The best way to', 'You should always', 'It is important to',
+            'Many developers', 'The key to', 'When working with',
         ];
 
         $middles = [
             'approach for handling', 'solution to', 'method of implementing',
             'way to optimize', 'technique for managing', 'strategy for building',
-            'pattern for designing', 'practice for maintaining', 'tool for debugging',
         ];
 
         $endings = [
             'complex applications.', 'scalable systems.', 'modern web apps.',
             'production environments.', 'large codebases.', 'real-world projects.',
-            'enterprise solutions.', 'distributed systems.', 'microservices.',
         ];
 
         return $starters[array_rand($starters)] . ' ' .
-               $middles[array_rand($middles)] . ' ' .
-               $endings[array_rand($endings)];
+            $middles[array_rand($middles)] . ' ' .
+            $endings[array_rand($endings)];
     }
 }
