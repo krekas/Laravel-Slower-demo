@@ -28,7 +28,7 @@ class DashboardController extends Controller
         ");
 
         // Query 2: Top engaging posts with N+1 pattern (intentionally inefficient)
-        $topEngagingPosts = DB::table('posts')
+        /*$topEngagingPosts = DB::table('posts')
             ->select([
                 'posts.id',
                 'posts.title',
@@ -39,6 +39,29 @@ class DashboardController extends Controller
                          (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) * 5 +
                          (SELECT COUNT(*) FROM post_tag WHERE post_tag.post_id = posts.id) * 2) as engagement_score')
             ])
+            ->where('posts.is_published', true)
+            ->orderByRaw('engagement_score DESC')
+            ->limit(10)
+            ->get();*/
+        $topEngagingPosts = DB::table('posts')
+            ->select([
+                'posts.id',
+                'posts.title',
+                'posts.view_count',
+                DB::raw('COALESCE(c.cnt, 0) as comment_count'),
+                DB::raw('COALESCE(t.cnt, 0) as tag_count'),
+                DB::raw('(posts.view_count * 0.1 + COALESCE(c.cnt, 0) * 5 + COALESCE(t.cnt, 0) * 2) as engagement_score')
+            ])
+            ->leftJoin(DB::raw('(
+                    SELECT post_id, COUNT(*) as cnt
+                    FROM comments
+                    GROUP BY post_id
+                ) as c'), 'c.post_id', '=', 'posts.id')
+                        ->leftJoin(DB::raw('(
+                    SELECT post_id, COUNT(*) as cnt
+                    FROM post_tag
+                    GROUP BY post_id
+                ) as t'), 't.post_id', '=', 'posts.id')
             ->where('posts.is_published', true)
             ->orderByRaw('engagement_score DESC')
             ->limit(10)
